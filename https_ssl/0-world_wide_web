@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Script that displays information about subdomains
+
+# Function to get subdomain information
+get_subdomain_info() {
+    local domain=$1
+    local subdomain=$2
+    
+    # Use dig to query the subdomain and parse with awk
+    local output=$(dig "$subdomain.$domain" | grep -A1 'ANSWER SECTION:' | tail -n1)
+    
+    # Extract record type and destination using awk
+    # shellcheck disable=SC2086
+    local record_type=$(echo $output | awk '{print $4}')
+    # shellcheck disable=SC2086
+    local destination=$(echo $output | awk '{print $5}')
+    
+    # Display the information
+    echo "The subdomain $subdomain is a $record_type record and points to $destination"
+}
+
+# Main script logic
+domain=$1
+subdomain=$2
+
+if [ -z "$subdomain" ]; then
+    # If no subdomain specified, check all default subdomains
+    get_subdomain_info "$domain" "www"
+    get_subdomain_info "$domain" "lb-01"
+    get_subdomain_info "$domain" "web-01"
+    get_subdomain_info "$domain" "web-02"
+else
+    # If subdomain specified, check only that subdomain
+    get_subdomain_info "$domain" "$subdomain"
+fi
